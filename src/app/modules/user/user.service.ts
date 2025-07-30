@@ -7,6 +7,7 @@ import { IAuthProvider, IUser, Role } from "./user.interface";
 import { User } from "./user.model";
 import { QueryBuilder } from "../../utils/QueryBuilder";
 import { userSearchableFields } from "./user.constant";
+import { Wallet } from "../wallet/wallet.model";
 
 const createUser = async (payload: Partial<IUser>) => {
     const { email, password, ...rest } = payload;
@@ -28,6 +29,13 @@ const createUser = async (payload: Partial<IUser>) => {
         auths: [authProvider],
         ...rest
     })
+      if (user.role === Role.USER || user.role === Role.AGENT) {
+        await Wallet.create({
+            userId: user._id,
+            balance: 50,
+            currency: "BDT"
+        });
+    }
 
     return user
 
@@ -55,12 +63,7 @@ const updateUser = async (userId: string, payload: Partial<IUser>, decodedToken:
         if (decodedToken.role === Role.USER || decodedToken.role === Role.AGENT) {
             throw new AppError(httpStatus.FORBIDDEN, "You are not authorized");
         }
-
-        // if (payload.role === Role.SUPER_ADMIN && decodedToken.role === Role.ADMIN) {
-        //     throw new AppError(httpStatus.FORBIDDEN, "You are not authorized");
-        // }
     }
-
     if (payload.isActive || payload.isDeleted || payload.isVerified) {
         if (decodedToken.role === Role.USER || decodedToken.role === Role.AGENT) {
             throw new AppError(httpStatus.FORBIDDEN, "You are not authorized");
@@ -71,6 +74,63 @@ const updateUser = async (userId: string, payload: Partial<IUser>, decodedToken:
 
     return newUpdatedUser
 }
+
+
+const createAgent = async (userId: string,payload: Partial<IUser>, decodedToken: JwtPayload) => {
+  const requesterRole = decodedToken.role;
+  const requesterId = decodedToken.userId;
+
+  const targetUser = await User.findById(userId);
+  if (!targetUser) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  // ✅ Self-update restriction for USER or AGENT
+  if ((requesterRole === Role.USER || requesterRole === Role.AGENT) && userId !== requesterId) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "You are not authorized");
+  }
+
+  // ✅ ADMIN can't update SUPER_ADMIN
+  if (requesterRole === Role.ADMIN && targetUser.role === Role.SUPER_ADMIN) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "You are not authorized to modify a SUPER_ADMIN");
+  }
+
+  // ✅ Only Admins or above can update roles
+  if (payload.role) {
+    if (requesterRole !== Role.ADMIN && requesterRole !== Role.SUPER_ADMIN) {
+      throw new AppError(httpStatus.FORBIDDEN, "Only ADMINs can update roles");
+    }
+
+    if (payload.role === Role.SUPER_ADMIN) {
+      throw new AppError(httpStatus.FORBIDDEN, "Cannot assign SUPER_ADMIN role");
+    }
+  }
+
+  // ✅ Basic field permission check (isActive, isDeleted, isVerified)
+  if (payload.isActive !== undefined ||payload.isDeleted !== undefined ||payload.isVerified !== undefined) {
+    if (requesterRole === Role.USER) {
+      throw new AppError(httpStatus.FORBIDDEN, "You are not authorized to update status fields");
+    }
+  }
+
+    // 🛡️ New: Restrict role change if not verified
+  if (payload.role) {
+    if (decodedToken.role === Role.USER || decodedToken.role === Role.AGENT) {
+      throw new AppError(httpStatus.FORBIDDEN, "You are not authorized to update roles");
+    }
+
+    if (!targetUser.isVerified) {
+      throw new AppError(httpStatus.FORBIDDEN, "Cannot update role. User is not verified.");
+    }
+  }
+
+  const updatedAgent = await User.findByIdAndUpdate(userId, payload, {
+    new: true,
+    runValidators: true,
+  });
+
+  return updatedAgent;
+};
 
 
 const getAllUsers = async (query: Record<string, string>) => {
@@ -111,5 +171,6 @@ export const UserServices = {
     getAllUsers,
     getSingleUser,
     updateUser,
-    getMe
+    getMe,
+    createAgent
 }

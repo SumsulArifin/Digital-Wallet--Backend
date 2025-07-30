@@ -41,6 +41,28 @@ const createUser = catchAsync(async (req: Request, res: Response, next: NextFunc
         data: user,
     })
 })
+
+const createAgnt = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.params.id;
+    const verifiedToken = req.user as JwtPayload;
+    const payload = req.body;
+
+    const updatedAgent = await UserServices.createAgent(userId, payload, verifiedToken);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "User Updated Successfully",
+      data: updatedAgent,
+    });
+  }
+);
+
+
+
+
+
 const updateUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.params.id;
     // const token = req.headers.authorization
@@ -115,7 +137,8 @@ export const UserControllers = {
     getAllUsers,
     getSingleUser,
     updateUser,
-    getMe
+    getMe,
+    createAgnt
 }
 
 // route matching -> controller -> service -> model -> DB
