@@ -33,9 +33,9 @@ const getMyWallet = catchAsync(
     const decodedToken = req.user as JwtPayload;
     const userId = decodedToken.userId;
  const requestedUserId = req.params.userId;
-    if (decodedToken.role !== Role.USER) {
-      throw new AppError(httpStatus.FORBIDDEN, "Only users can access their wallets");
-    }
+    // if (decodedToken.role !== Role.USER) {
+    //   throw new AppError(httpStatus.FORBIDDEN, "Only users can access their wallets");
+    // }
     if (decodedToken.userId !== requestedUserId) {
       throw new AppError(httpStatus.UNAUTHORIZED, "You are not authorized to access this wallet");
     }
