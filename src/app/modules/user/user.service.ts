@@ -6,8 +6,9 @@ import AppError from "../../errorHelpers/AppError";
 import { IAuthProvider, IUser, Role } from "./user.interface";
 import { User } from "./user.model";
 import { QueryBuilder } from "../../utils/QueryBuilder";
-import { userSearchableFields } from "./user.constant";
+import { transactionSearchableFields, userSearchableFields, walletSearchableFields } from "./user.constant";
 import { Wallet } from "../wallet/wallet.model";
+import { Transaction } from "../transaction/transaction.model";
 
 const createUser = async (payload: Partial<IUser>) => {
     const { email, password, ...rest } = payload;
@@ -84,18 +85,12 @@ const createAgent = async (userId: string,payload: Partial<IUser>, decodedToken:
   if (!targetUser) {
     throw new AppError(httpStatus.NOT_FOUND, "User not found");
   }
-
-  // ✅ Self-update restriction for USER or AGENT
   if ((requesterRole === Role.USER || requesterRole === Role.AGENT) && userId !== requesterId) {
     throw new AppError(httpStatus.UNAUTHORIZED, "You are not authorized");
   }
-
-  // ✅ ADMIN can't update SUPER_ADMIN
   if (requesterRole === Role.ADMIN && targetUser.role === Role.SUPER_ADMIN) {
     throw new AppError(httpStatus.UNAUTHORIZED, "You are not authorized to modify a SUPER_ADMIN");
   }
-
-  // ✅ Only Admins or above can update roles
   if (payload.role) {
     if (requesterRole !== Role.ADMIN && requesterRole !== Role.SUPER_ADMIN) {
       throw new AppError(httpStatus.FORBIDDEN, "Only ADMINs can update roles");
@@ -105,15 +100,11 @@ const createAgent = async (userId: string,payload: Partial<IUser>, decodedToken:
       throw new AppError(httpStatus.FORBIDDEN, "Cannot assign SUPER_ADMIN role");
     }
   }
-
-  // ✅ Basic field permission check (isActive, isDeleted, isVerified)
   if (payload.isActive !== undefined ||payload.isDeleted !== undefined ||payload.isVerified !== undefined) {
     if (requesterRole === Role.USER) {
       throw new AppError(httpStatus.FORBIDDEN, "You are not authorized to update status fields");
     }
   }
-
-    // 🛡️ New: Restrict role change if not verified
   if (payload.role) {
     if (decodedToken.role === Role.USER || decodedToken.role === Role.AGENT) {
       throw new AppError(httpStatus.FORBIDDEN, "You are not authorized to update roles");
@@ -153,6 +144,47 @@ const getAllUsers = async (query: Record<string, string>) => {
         meta
     }
 };
+const getAllwallets  = async (query: Record<string, string>) => {
+
+    const queryBuilder = new QueryBuilder(Wallet.find(), query)
+    const walletData = queryBuilder
+        .filter()
+        .search(walletSearchableFields)
+        .sort()
+        .fields()
+        .paginate();
+
+    const [data, meta] = await Promise.all([
+        walletData.build(),
+        queryBuilder.getMeta()
+    ])
+
+    return {
+        data,
+        meta
+    }
+};
+const getAllTransaction  = async (query: Record<string, string>) => {
+
+    const queryBuilder = new QueryBuilder(Transaction.find(), query)
+    const transactionData = queryBuilder
+        .filter()
+        .search(transactionSearchableFields)
+        .sort()
+        .fields()
+        .paginate();
+
+    const [data, meta] = await Promise.all([
+        transactionData.build(),
+        queryBuilder.getMeta()
+    ])
+
+    return {
+        data,
+        meta
+    }
+};
+
 const getSingleUser = async (id: string) => {
     const user = await User.findById(id).select("-password");
     return {
@@ -172,5 +204,8 @@ export const UserServices = {
     getSingleUser,
     updateUser,
     getMe,
-    createAgent
+    createAgent,
+    getAllwallets,
+    getAllTransaction
+  
 }

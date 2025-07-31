@@ -103,6 +103,30 @@ const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFun
         meta: result.meta
     })
 })
+const getAllwallets = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const query = req.query;
+    const result = await UserServices.getAllwallets(query as Record<string, string>);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.CREATED,
+        message: "All Wallets Retrieved Successfully",
+        data: result.data,
+        meta: result.meta
+    })
+})
+const getAllTransaction = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const query = req.query;
+    const result = await UserServices.getAllTransaction(query as Record<string, string>);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: httpStatus.CREATED,
+        message: "All Transaction Retrieved Successfully",
+        data: result.data,
+        meta: result.meta
+    })
+})
 const getMe = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const decodedToken = req.user as JwtPayload
     const result = await UserServices.getMe(decodedToken.userId);
@@ -138,7 +162,9 @@ export const UserControllers = {
     getSingleUser,
     updateUser,
     getMe,
-    createAgnt
+    createAgnt,
+    getAllwallets,
+    getAllTransaction
 }
 
 // route matching -> controller -> service -> model -> DB

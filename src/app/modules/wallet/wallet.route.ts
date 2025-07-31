@@ -12,7 +12,6 @@ router.patch(
   WalletController.updateWalletStatus
 );
 router.get(
-  "/getWallet/:userId",checkAuth(...Object.values(Role)),
-  WalletController.getMyWallet
+  "/getWallet",checkAuth(...Object.values(Role)),WalletController.getMyWallet
 );
 export const WalletRoutes = router;
