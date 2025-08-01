@@ -18,6 +18,7 @@ A secure and modular digital wallet backend built with **Node.js**, **Express.js
 
 ```
 
+
 src/
 ├── app/
 │   ├── config/              → DB, Redis, and env configs
@@ -32,7 +33,13 @@ src/
 ├── app.ts                   → Express config
 ├── server.ts                → Entry point
 
+
 ````
+
+
+
+
+
 
 ---
 
@@ -170,12 +177,4 @@ Made with ❤️ by [Sumsul Arifin](https://github.com/SumsulArifin)
 
 ```
 
----
 
-Let me know if you want:
-- Auto-push to your GitHub repo
-- `README.md` uploaded directly as a file
-- A separate `docs/` folder for API screenshots and diagrams
-
-Just say the word.
-```
