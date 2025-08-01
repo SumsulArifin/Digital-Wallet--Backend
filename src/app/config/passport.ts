@@ -16,25 +16,19 @@ passport.use(
         try {
             const isUserExist = await User.findOne({ email })
 
-            // if (!isUserExist) {
-            //     return done(null, false, { message: "User does not exist" })
-            // }
-
             if (!isUserExist) {
                 return done("User does not exist")
             }
 
             if (!isUserExist.isVerified) {
-                // throw new AppError(httpStatus.BAD_REQUEST, "User is not verified")
                 return done("User is not verified")
             }
 
             if (isUserExist.isActive === IsActive.BLOCKED ) {
-                // throw new AppError(httpStatus.BAD_REQUEST, `User is ${isUserExist.isActive}`)
                 return done(`User is ${isUserExist.isActive}`)
             }
             if (isUserExist.isDeleted) {
-                // throw new AppError(httpStatus.BAD_REQUEST, "User is deleted")
+
                 return done("User is deleted")
             }
 
@@ -44,11 +38,6 @@ passport.use(
             if (isGoogleAuthenticated && !isUserExist.password) {
                 return done(null, false, { message: "You have authenticated through Google. So if you want to login with credentials, then at first login with google and set a password for your Gmail and then you can login with email and password." })
             }
-
-            // if (isGoogleAuthenticated) {
-            //     return done("You have authenticated through Google. So if you want to login with credentials, then at first login with google and set a password for your Gmail and then you can login with email and password.")
-            // }
-
             const isPasswordMatched = await bcryptjs.compare(password as string, isUserExist.password as string)
 
             if (!isPasswordMatched) {
@@ -81,19 +70,15 @@ passport.use(
 
                 let isUserExist = await User.findOne({ email })
                 if (isUserExist && !isUserExist.isVerified) {
-                    // throw new AppError(httpStatus.BAD_REQUEST, "User is not verified")
-                    // done("User is not verified")
+                
                     return done(null, false, { message: "User is not verified" })
                 }
-
                 if (isUserExist && (isUserExist.isActive === IsActive.BLOCKED)) {
-                    // throw new AppError(httpStatus.BAD_REQUEST, `User is ${isUserExist.isActive}`)
                     done(`User is ${isUserExist.isActive}`)
                 }
 
                 if (isUserExist && isUserExist.isDeleted) {
                     return done(null, false, { message: "User is deleted" })
-                    // done("User is deleted")
                 }
 
                 if (!isUserExist) {
@@ -122,13 +107,6 @@ passport.use(
         }
     )
 )
-
-// frontend localhost:5173/login?redirect=/booking -> localhost:5000/api/v1/auth/google?redirect=/booking -> passport -> Google OAuth Consent -> gmail login -> successful -> callback url localhost:5000/api/v1/auth/google/callback -> db store -> token
-
-// Bridge == Google -> user db store -> token
-//Custom -> email , password, role : USER, name... -> registration -> DB -> 1 User create
-//Google -> req -> google -> successful : Jwt Token : Role , email -> DB - Store -> token - api access
-
 
 passport.serializeUser((user: any, done: (err: any, id?: unknown) => void) => {
     done(null, user._id)

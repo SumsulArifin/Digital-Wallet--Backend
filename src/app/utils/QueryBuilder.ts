@@ -15,11 +15,10 @@ export class QueryBuilder<T> {
         const filter = { ...this.query }
 
         for (const field of excludeField) {
-            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
             delete filter[field]
         }
 
-        this.modelQuery = this.modelQuery.find(filter) // Tour.find().find(filter)
+        this.modelQuery = this.modelQuery.find(filter) 
 
         return this;
     }

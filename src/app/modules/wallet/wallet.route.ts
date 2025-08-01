@@ -5,7 +5,6 @@ import { Role } from "../user/user.interface";
 
 const router = Router();
 
-// PATCH /api/v1/wallet/update-status/:id
 router.patch(
   "/update-status/:id",
   checkAuth(Role.ADMIN, Role.SUPER_ADMIN),

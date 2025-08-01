@@ -4,13 +4,13 @@ import mongoose from "mongoose";
 import app from "./app";
 import { envVars } from "./app/config/env";
 import { seedSuperAdmin } from "./app/utils/seedSuperAdmin";
+import { connectRedis } from "./app/config/redis.config";
 
-// let server: Server;
 let server=createServer(app)
 const startServer = async () => {
     try {
         await mongoose.connect(envVars.DB_URL, {
-            serverSelectionTimeoutMS: 10000, // Wait 10s before timeout
+            serverSelectionTimeoutMS: 10000, 
         });
 
         mongoose.connection.on("connected", () => {
@@ -29,22 +29,8 @@ const startServer = async () => {
     }
 };
 
-
-// const startServer = async () => {
-//     try {
-//         await mongoose.connect(envVars.DB_URL)
-
-//         console.log("Connected to DB!!");
-
-//         server = app.listen(envVars.PORT, () => {
-//             console.log(`Server is listening to port ${envVars.PORT}`);
-//         });
-//     } catch (error) {
-//         console.log(error);
-//     }
-// }
-
 (async () => {
+     await connectRedis()
     await startServer()
     await seedSuperAdmin()
 })()
@@ -97,17 +83,3 @@ process.on("uncaughtException", (err) => {
 
     process.exit(1)
 })
-
-// Unhandler rejection error
-// Promise.reject(new Error("I forgot to catch this promise"))
-
-// Uncaught Exception Error
-// throw new Error("I forgot to handle this local erro")
-
-
-/**
- * unhandled rejection error
- * uncaught rejection error
- * signal termination sigterm
- */
-
